@@ -88,7 +88,7 @@ func listenToFile(ch chan<- []models.LogRecord, watcher *fsnotify.Watcher, fname
 				//println("\t fname:", fname)
 				if fname0 == fname {
 					records, offset, err = readLines(reader, offset, fname)
-					println("\t len(records):", len(records), "; offset:", offset, "; fname0:", fname0)
+					//println("\t len(records):", len(records), "; offset:", offset, "; fname0:", fname0)
 					if len(records)>0 {
 						ch <- records
 					}
