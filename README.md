@@ -2,7 +2,7 @@
 
 Features:
 
-* Incremental reading of CSV file
+* Incremental reading of log files (i.e. log files can be huge)
 * Graceful shutdown
 * For each log file, a goroutine is launched, which monitors the addition of new lines to the file.
 * The main goroutine gets the generated objects from the goroutines and saves them to MongoDB.
