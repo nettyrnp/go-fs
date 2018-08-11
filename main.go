@@ -13,6 +13,8 @@ import (
 	"github.com/nettyrnp/go-fs/models"
 	"github.com/nettyrnp/go-fs/storage"
 	"errors"
+	"os/signal"
+	"syscall"
 )
 
 const (
@@ -24,6 +26,9 @@ const (
 func main() {
 	// Handle termination signals
 	errors := make(chan error, 1)
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt)
+	signal.Notify(signals, syscall.SIGTERM)
 
 	// New file watcher
 	watcher, err := fsnotify.NewWatcher()
@@ -52,12 +57,24 @@ func main() {
 		fmt.Println("Error", err)
 	}
 
-	// Wait until the service fails or it is terminated.
+	// Wait until the application fails or it is terminated.
 	select {
 	case err := <-errors:
-		// Handle the error from ingestor or persistor
-		log.Printf("Error from ingestor or persistor: %v\n", err)
+		// Handle the error from the application
+		log.Printf("Error from the application: %v\n", err)
 		break
+	case sig := <-signals:
+		// Handle shutdown signals
+		log.Printf("Signal: %v\n", sig)
+		break
+	}
+
+	// Terminate gracefully
+	i := 3
+	for i > 0 {
+		log.Printf("Terminating the application in %d s\n", i)
+		time.Sleep(1 * time.Second)
+		i = i - 1
 	}
 }
 
@@ -82,11 +99,8 @@ func listenToFile(ch chan<- []models.LogRecord, watcher *fsnotify.Watcher, fname
 			if event.Op & fsnotify.Write == fsnotify.Write {
 				fname0 := normalize(event.Name)
 				//log.Println("New write event to file:", fname)
-				// New lines appeared in the log file, so read them
-				//println("\t fname0 == fname:", fname0 == fname)
-				//println("\t fname0:", fname0)
-				//println("\t fname:", fname)
 				if fname0 == fname {
+					// New lines appeared in the log file, so read them
 					records, offset, err = readLines(reader, offset, fname)
 					//println("\t len(records):", len(records), "; offset:", offset, "; fname0:", fname0)
 					if len(records)>0 {
@@ -133,11 +147,11 @@ func readLines0(reader *bufio.Reader, offset int, fname string) []models.LogReco
 	var count = offset
 	for count <= offset+limit {
 		var error error
-		var buf, buf2 []byte
+		var buf, buf0 []byte
 		var hasMore = true
 		for hasMore {
-			buf2, hasMore, error = reader.ReadLine()
-			buf = append(buf, buf2...)
+			buf0, hasMore, error = reader.ReadLine()
+			buf = append(buf, buf0...)
 		}
 		line := string(buf)
 		if error == io.EOF {
