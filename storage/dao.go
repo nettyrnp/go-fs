@@ -75,6 +75,6 @@ func Save(records []models.LogRecord) {
 	if err != nil {
 		panic(err)
 	}
-	log.Println("Records in DB:", n)
+	log.Println("Total records in DB:", n)
 
 }

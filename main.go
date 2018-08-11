@@ -12,7 +12,6 @@ import (
 	"io"
 	"github.com/nettyrnp/go-fs/models"
 	"github.com/nettyrnp/go-fs/storage"
-	"errors"
 	"os/signal"
 	"syscall"
 )
@@ -98,9 +97,11 @@ func listenToFile(ch chan<- []models.LogRecord, watcher *fsnotify.Watcher, fname
 		case event := <-watcher.Events:
 			if event.Op & fsnotify.Write == fsnotify.Write {
 				fname0 := normalize(event.Name)
-				//log.Println("New write event to file:", fname)
 				if fname0 == fname {
-					// New lines appeared in the log file, so read them
+					log.Println("New writing in file:", fname)
+
+					// Wait till writing finishes
+					time.Sleep(100 * time.Millisecond)
 					records, offset, err = readLines(reader, offset, fname)
 					if len(records)>0 {
 						ch <- records
@@ -122,22 +123,19 @@ func normalize(s string) string {
 }
 
 func readLines(reader *bufio.Reader, offset int, fname string) ([]models.LogRecord, int, error) {
-	var records0 []models.LogRecord
+	var records []models.LogRecord
 	for {
 		// Read lines from file
-		records := readLines0(reader, offset, fname)
-		if len(records) == 0 {
-			return records0, offset, nil
+		records0 := readLines0(reader, offset, fname)
+		if len(records0) == 0 {
+			return records, offset, nil
 		}
-		records0 = append(records0, records...)
-		log.Printf("Reading: loaded %d lines from file '%s'", len(records), fname)
+		records = append(records, records0...)
+		log.Printf("Reading: loaded %d lines from file '%s'", len(records0), fname)
 
-		offset = offset+len(records)
-
-		// Slow down for learning purposes
-		time.Sleep(200 * time.Millisecond)
+		offset = offset+len(records0)
 	}
-	return nil, -1, errors.New("sd")
+	panic("Something went wrong. Should never reach this line")
 }
 
 
@@ -153,6 +151,7 @@ func readLines0(reader *bufio.Reader, offset int, fname string) []models.LogReco
 			buf = append(buf, buf0...)
 		}
 		line := string(buf)
+
 		if error == io.EOF {
 			break
 		} else if error != nil {
@@ -162,7 +161,6 @@ func readLines0(reader *bufio.Reader, offset int, fname string) []models.LogReco
 		if len(line) == 0 {
 			continue
 		}
-		//log.Println("Reading: read line: '" + line + "'")
 		p := models.NewRecord(line, fname)
 		records = append(records, p)
 	}
