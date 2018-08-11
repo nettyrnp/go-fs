@@ -18,11 +18,6 @@ type LogRecord struct {
 	LogFormat       string    `bson:"log_format"`
 }
 
-//func (p LogRecord) String() string {
-//	//return fmt.Sprintf("%v,%v,%v,%v", p.LogTime, p.LogMsg, p.Email, p.MobileNumber)
-//	return fmt.Sprintf("%+v", p)
-//}
-
 func NewRecord(line, filepath string) LogRecord {
 	parts := strings.Split(line, " | ")
 	if len(parts) != 2 {
@@ -37,7 +32,6 @@ func NewRecord(line, filepath string) LogRecord {
 }
 
 func detectFormatType(timeStr string) string {
-	//assertValid(timeStr)
 	var patterns = []*regexp.Regexp{
 		//"Feb 1, 2018 at 3:04:05pm (UTC)",
 		regexp.MustCompile("[A-Z][a-z]{2} \\d{1,2}, \\d{4} at \\d{1,2}:\\d{2}:\\d{2}(am|pm) \\([A-Z]{3}\\)"),
@@ -52,12 +46,10 @@ func detectFormatType(timeStr string) string {
 	return "Unrecognized format [" + timeStr + "]"
 }
 
-//func assertValid(timeStr string) {
 func toTime(timeStr string) time.Time {
 	t, err := dateparse.ParseLocal(timeStr)
 	if err != nil {
 		panic(err)
 	}
-	//fmt.Println(timeStr, ":", fmt.Sprintf("%v", t))
 	return t
 }

@@ -10,11 +10,10 @@ import (
 
 var (
 	Host = []string{"127.0.0.1:27017"}
-	//session *mgo.Session
 )
 const (
-	//Username   = "..."
-	//Password   = "..."
+	Username   = "..."
+	Password   = "..."
 	Database   = "logdb"
 	Collection = "logs"
 )
@@ -22,6 +21,7 @@ func init() {
 	// Clear DB
 	resetDB()
 
+	// Set timezone
 	timezone := "UTC"
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
@@ -40,6 +40,7 @@ func resetDB() {
 	}
 }
 
+// Uncomment the commented-out lines, when contacting remote MongoDB server
 func openSession() *mgo.Session {
 	session, err := mgo.DialWithInfo(&mgo.DialInfo{
 		Addrs: Host,
@@ -56,30 +57,14 @@ func openSession() *mgo.Session {
 	return session
 }
 
-//type FormatType int8
-//
-//const (
-//	_             FormatType = iota
-//	FIRST_FORMAT
-//	SECOND_FORMAT
-//)
-//
-//func (d FormatType) String() string {
-//	codes := map[FormatType]string{
-//		FIRST_FORMAT: "FIRST_FORMAT",
-//		SECOND_FORMAT: "SECOND_FORMAT",
-//	}
-//	return codes[d]
-//}
-
 func Save(records []models.LogRecord) {
 	session := openSession()
 	defer session.Close()
 
 	c := session.DB(Database).C(Collection)
 
+	// TODO: make batch insert
 	for _, record := range records {
-		// Insert rec
 		if err := c.Insert(record); err != nil {
 			panic(err)
 		}
@@ -90,14 +75,6 @@ func Save(records []models.LogRecord) {
 	if err != nil {
 		panic(err)
 	}
-	log.Println("Saving: total records in DB:", n)
+	log.Println("Records in DB:", n)
 
-	//// Get all
-	//var games []models.LogRecord
-	//err := c.Find(nil).Sort("-start").All(&games)
-	//if err != nil {
-	//	panic(err)
-	//}
-	////fmt.Println("Log records", len(games))
-	////fmt.Println("Log records:", games)
 }

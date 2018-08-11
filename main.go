@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	limit = 40 // max lines to load in single round
+	limit = 40 // Batch size
 	fname1 = "data/name1.log"
 	fname2 = "data/name2.log"
 )
@@ -94,7 +94,7 @@ func listenToFile(ch chan<- []models.LogRecord, watcher *fsnotify.Watcher, fname
 
 	for {
 		select {
-		// watch for events
+		// Watch for events
 		case event := <-watcher.Events:
 			if event.Op & fsnotify.Write == fsnotify.Write {
 				fname0 := normalize(event.Name)
@@ -102,13 +102,12 @@ func listenToFile(ch chan<- []models.LogRecord, watcher *fsnotify.Watcher, fname
 				if fname0 == fname {
 					// New lines appeared in the log file, so read them
 					records, offset, err = readLines(reader, offset, fname)
-					//println("\t len(records):", len(records), "; offset:", offset, "; fname0:", fname0)
 					if len(records)>0 {
 						ch <- records
 					}
 				}
 			}
-		// watch for errors
+		// Watch for errors
 		case err := <-watcher.Errors:
 			if err != nil {
 				log.Println("Error:", err)
@@ -135,7 +134,7 @@ func readLines(reader *bufio.Reader, offset int, fname string) ([]models.LogReco
 
 		offset = offset+len(records)
 
-		// Slow down to better see the effect of <Ctrl+C>
+		// Slow down for learning purposes
 		time.Sleep(200 * time.Millisecond)
 	}
 	return nil, -1, errors.New("sd")
